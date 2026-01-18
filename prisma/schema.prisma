@@ -1,0 +1,152 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// TODO: Change Phone Number to String
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  admin
+  user
+}
+
+enum tokenType {
+  access
+  refresh
+  reset_password
+  email_verification
+}
+
+model User {
+  id                 String        @id @default(uuid())
+  email              String        @unique
+  firstName          String?
+  lastName           String?
+  avatar             String?       @default("/uploads/users/user.png")
+  password           String?
+  role               Role          @default(user)
+  oneTimeCode        String?
+  oneTimeCodeExpires DateTime?
+  isEmailVerified    Boolean       @default(false)
+  isResetPassword    Boolean       @default(false)
+  isDeleted          Boolean       @default(false)
+  fcmToken           String?
+  phoneNumber        String?
+  countryCode        String?
+  // Status
+  isRestricted       Boolean       @default(false)
+  restrictionReason  String?
+  // Business
+  bio                String?
+  // Timestamps
+  isOnline           Boolean       @default(false)
+  lastSeen           DateTime?
+  lastLoginAt        DateTime?     @default(now())
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  // Relations
+  tokens             Token[]
+  transactions       Transaction[]
+}
+
+model Token {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  token String    @unique
+  type  tokenType @default(refresh)
+
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+
+  deviceId   String?
+  deviceName String?
+  userAgent  String? @db.Text
+  ipAddress  String?
+
+  isRevoked     Boolean   @default(false)
+  revokedAt     DateTime?
+  revokedReason String?
+
+  tokenFamily     String?
+  replacesTokenId String?
+  useCount        Int     @default(0)
+
+  sessionId  String?
+  rememberMe Boolean @default(false)
+
+  metadata Json?
+
+  @@index([userId])
+  @@index([type])
+  @@index([tokenFamily])
+  @@index([expiresAt])
+  @@index([isRevoked])
+}
+
+model Transaction {
+  id            String   @id @default(uuid())
+  sessionId     String? // Optional for clinic purchases
+  clientId      String? // Optional for clinic purchases
+  clinicId      String? // For clinic purchase transactions
+  userId        String? // User who made the transaction
+  transactionId String?  @unique
+  amount        Float?
+  type          String? // "appointment", "clinic_purchase", "subscription", etc.
+  method        String? // "stripe", "cash", etc.
+  status        String? // "pending", "completed", "failed", "refunded"
+  description   String?
+  meta          Json? // Store additional data like planId, stripeSessionId, etc.
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([sessionId])
+  @@index([clientId])
+  @@index([clinicId])
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+}
+
+enum SettingType {
+  terms_and_conditions
+  about_us
+  privacy_policy
+  faq
+}
+
+model Setting {
+  id        String      @id @default(uuid())
+  type      SettingType @unique
+  content   String      @db.Text
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([type])
+}
+
+model FAQ {
+  id        String   @id @default(uuid())
+  question  String   @db.Text
+  answer    String   @db.Text
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+}
