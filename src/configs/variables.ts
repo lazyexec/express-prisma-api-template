@@ -2,60 +2,102 @@ import { configDotenv } from "dotenv";
 import { z } from "zod";
 configDotenv();
 
-const envSchema = z.object({
-  APP_NAME: z.string().default("express-prisma-api-template").describe("Application name"),
-  PORT: z.coerce.number().default(3000),
-  BACKEND_IP: z.string().default("localhost"),
-  SOCKET_PORT: z.coerce.number().default(3001),
-  DATABASE_URL: z.string().optional(),
-  NODE_ENV: z.enum(["development", "production"]).default("development"),
-  JWT_SECRET: z.string().min(1).describe("JWT Secret key"),
-  JWT_ACCESS_EXPIRY: z.string().default("3d").describe("JWT Access Expiry time"),
-  JWT_REFRESH_EXPIRY: z.string().default("30d").describe("JWT Refresh Expiry time"),
-  SMTP_HOST: z.string().min(1).describe("SMTP Host"),
-  SMTP_PORT: z.coerce.number().describe("SMTP Port"),
-  SMTP_USERNAME: z.string().min(1).describe("SMTP Username"),
-  SMTP_PASSWORD: z.string().min(1).describe("SMTP Password"),
-  EMAIL_FROM: z.string().email().optional().describe("Email From Address"),
-  // URLS
-  FRONTEND_URL: z.string().default("*").describe("Frontend URL"),
-  BACKEND_URL: z.string().optional().describe("Backend URL"), // Will default below if not present, but Zod default is static. 
-  // We can handle dynamic default in the object construction or refine.
-  FIREBASE_PROJECT_ID: z.string().optional().describe("Firebase project Id"),
-  FIREBASE_PRIVATE_KEY: z.string().optional().describe("Firebase Private Key"),
-  FIREBASE_CLIENT_EMAIL: z.string().optional().describe("Firebase Client Email"),
-  GOOGLE_CLIENT_ID: z.string().optional().describe("Google Client ID"),
-  GOOGLE_CLIENT_SECRET: z.string().optional().describe("Google Client Secret"),
-  // Zoom Integration
-  ZOOM_ACCOUNT_ID: z.string().optional().describe("Zoom Account ID"),
-  ZOOM_CLIENT_ID: z.string().optional().describe("Zoom Client ID"),
-  ZOOM_CLIENT_SECRET: z.string().optional().describe("Zoom Client Secret"),
-  // Xero Integration
-  XERO_CLIENT_ID: z.string().optional().describe("Xero Client ID"),
-  XERO_CLIENT_SECRET: z.string().optional().describe("Xero Client Secret"),
-  XERO_REDIRECT_URI: z.string().optional().describe("Xero Redirect URI"),
-  // Mailchimp Integration
-  MAILCHIMP_API_KEY: z.string().optional().describe("Mailchimp API Key"),
-  MAILCHIMP_SERVER_PREFIX: z.string().optional().describe("Mailchimp Server Prefix"),
-  // Stripe Connect OAuth
-  STRIPE_SECRET_KEY: z.string().optional().describe("Stripe Secret Key"),
-  STRIPE_WEBHOOK_SECRET: z.string().optional().describe("Stripe Webhook Secret Key"),
-  STRIPE_CONNECT_CLIENT_ID: z.string().optional().describe("Stripe Connect Client ID"),
-  // Mailchimp OAuth
-  MAILCHIMP_CLIENT_ID: z.string().optional().describe("Mailchimp OAuth Client ID"),
-  MAILCHIMP_CLIENT_SECRET: z.string().optional().describe("Mailchimp OAuth Client Secret"),
-}).passthrough();
+const envSchema = z
+  .object({
+    APP_NAME: z
+      .string()
+      .default("express-prisma-api-template")
+      .describe("Application name"),
+    PORT: z.coerce.number().default(3000),
+    BACKEND_IP: z.string().default("localhost"),
+    SOCKET_PORT: z.coerce.number().default(3001),
+    DATABASE_URL: z.string().optional(),
+    NODE_ENV: z.enum(["development", "production"]).default("development"),
+    JWT_SECRET: z.string().min(1).describe("JWT Secret key"),
+    JWT_ACCESS_EXPIRY: z
+      .string()
+      .default("3d")
+      .describe("JWT Access Expiry time"),
+    JWT_REFRESH_EXPIRY: z
+      .string()
+      .default("30d")
+      .describe("JWT Refresh Expiry time"),
+    SMTP_HOST: z.string().min(1).describe("SMTP Host"),
+    SMTP_PORT: z.coerce.number().describe("SMTP Port"),
+    SMTP_USERNAME: z.string().min(1).describe("SMTP Username"),
+    SMTP_PASSWORD: z.string().min(1).describe("SMTP Password"),
+    EMAIL_FROM: z.string().email().optional().describe("Email From Address"),
+    // URLS
+    FRONTEND_URL: z.string().default("*").describe("Frontend URL"),
+    BACKEND_URL: z.string().optional().describe("Backend URL"), // Will default below if not present, but Zod default is static.
+    // We can handle dynamic default in the object construction or refine.
+    FIREBASE_PROJECT_ID: z.string().optional().describe("Firebase project Id"),
+    FIREBASE_PRIVATE_KEY: z
+      .string()
+      .optional()
+      .describe("Firebase Private Key"),
+    FIREBASE_CLIENT_EMAIL: z
+      .string()
+      .optional()
+      .describe("Firebase Client Email"),
+    GOOGLE_CLIENT_ID: z.string().optional().describe("Google Client ID"),
+    GOOGLE_CLIENT_SECRET: z
+      .string()
+      .optional()
+      .describe("Google Client Secret"),
+    // Zoom Integration
+    ZOOM_ACCOUNT_ID: z.string().optional().describe("Zoom Account ID"),
+    ZOOM_CLIENT_ID: z.string().optional().describe("Zoom Client ID"),
+    ZOOM_CLIENT_SECRET: z.string().optional().describe("Zoom Client Secret"),
+    // Xero Integration
+    XERO_CLIENT_ID: z.string().optional().describe("Xero Client ID"),
+    XERO_CLIENT_SECRET: z.string().optional().describe("Xero Client Secret"),
+    XERO_REDIRECT_URI: z.string().optional().describe("Xero Redirect URI"),
+    // Mailchimp Integration
+    MAILCHIMP_API_KEY: z.string().optional().describe("Mailchimp API Key"),
+    MAILCHIMP_SERVER_PREFIX: z
+      .string()
+      .optional()
+      .describe("Mailchimp Server Prefix"),
+    // Stripe Connect OAuth
+    STRIPE_SECRET_KEY: z.string().optional().describe("Stripe Secret Key"),
+    STRIPE_WEBHOOK_SECRET: z
+      .string()
+      .optional()
+      .describe("Stripe Webhook Secret Key"),
+    STRIPE_CONNECT_CLIENT_ID: z
+      .string()
+      .optional()
+      .describe("Stripe Connect Client ID"),
+    // Mailchimp OAuth
+    MAILCHIMP_CLIENT_ID: z
+      .string()
+      .optional()
+      .describe("Mailchimp OAuth Client ID"),
+    MAILCHIMP_CLIENT_SECRET: z
+      .string()
+      .optional()
+      .describe("Mailchimp OAuth Client Secret"),
+    IS_MULTI_LANGUAGE: z.coerce
+      .boolean()
+      .default(false)
+      .describe("Is Multi Language"),
+  })
+  .passthrough();
 
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  const errorMessage = parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
+  const errorMessage = parsed.error.issues
+    .map((i) => `${i.path.join(".")}: ${i.message}`)
+    .join(", ");
   throw new Error(`Config validation error: ${errorMessage}`);
 }
 
 const value = parsed.data;
 
-const backendUrl = value.BACKEND_URL || `http://${value.BACKEND_IP}:${value.PORT}`;
+const backendUrl =
+  value.BACKEND_URL || `http://${value.BACKEND_IP}:${value.PORT}`;
 
 const env = {
   APP_NAME: value.APP_NAME,
@@ -65,6 +107,7 @@ const env = {
   DATABASE_URL: value.DATABASE_URL,
   ENVIRONMENT: value.NODE_ENV,
   DEBUG: value.NODE_ENV === "development",
+  IS_MULTI_LANGUAGE: value.IS_MULTI_LANGUAGE,
   jwt: {
     secret: value.JWT_SECRET,
     expiryAccessToken: value.JWT_ACCESS_EXPIRY,

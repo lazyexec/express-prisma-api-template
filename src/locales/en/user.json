@@ -1,0 +1,10 @@
+{
+    "profile_retrieved": "User profile retrieved successfully",
+    "profile_updated": "User profile Updated successfully",
+    "users_retrieved": "Users retrieved successfully",
+    "user_restricted": "User restricted successfully",
+    "user_unrestricted": "User unrestricted successfully",
+    "user_added": "User profile Added successfully",
+    "user_deleted": "User Deleted successfully",
+    "user_recovered": "User Recovered successfully"
+}

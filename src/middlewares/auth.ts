@@ -4,6 +4,7 @@ import { roleRights } from "../configs/roles";
 import type { Request, Response, NextFunction } from "express";
 import passport from "passport";
 import logger from "../utils/logger";
+import i18n from "../utils/i18n";
 
 const verifyCallback =
   (
@@ -16,7 +17,7 @@ const verifyCallback =
       if (err) {
         logger.error("Authentication error", { error: err.message });
         return reject(
-          new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Authentication error")
+          new ApiError(httpStatus.INTERNAL_SERVER_ERROR, i18n.t("auth.authentication_error"))
         );
       }
 
@@ -26,13 +27,13 @@ const verifyCallback =
 
       if (info || !user) {
         return reject(
-          new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized")
+          new ApiError(httpStatus.UNAUTHORIZED, i18n.t("auth.unauthorized"))
         );
       }
 
       if (user.isDeleted) {
         logger.warn("Deleted user attempted access", { userId: user.id });
-        return reject(new ApiError(httpStatus.UNAUTHORIZED, "User Not Found!"));
+        return reject(new ApiError(httpStatus.UNAUTHORIZED, i18n.t("auth.user_not_found")));
       }
 
       if (user.isRestricted) {
@@ -40,7 +41,7 @@ const verifyCallback =
         return reject(
           new ApiError(
             httpStatus.FORBIDDEN,
-            "User is restricted, Please contact support"
+            i18n.t("auth.user_restricted")
           )
         );
       }
@@ -60,7 +61,7 @@ const verifyCallback =
             required: requiredRights,
             has: userRights
           });
-          return reject(new ApiError(httpStatus.FORBIDDEN, "Forbidden!"));
+          return reject(new ApiError(httpStatus.FORBIDDEN, i18n.t("auth.forbidden")));
         }
       }
 

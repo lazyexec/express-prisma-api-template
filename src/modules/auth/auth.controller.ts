@@ -14,7 +14,7 @@ const register = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.CREATED).json(
     response({
       status: httpStatus.CREATED,
-      message: "Thank you for registering. Please verify your email",
+      message: req.str("auth.register_success"),
     }),
   );
 });
@@ -43,8 +43,7 @@ const login = catchAsync(async (req: Request, res: Response) => {
     },
   });
 
-  console.log(req.device)
-
+  console.log(req.device);
 
   if (fcmToken) {
     await userService.updateUser(user?.id!, { fcmToken }, {});
@@ -61,7 +60,7 @@ const login = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "Login successful",
+      message: req.str("auth.login_success"),
       data: user,
       token,
     }),
@@ -90,7 +89,7 @@ const verifyAccount = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "Account verified successfully",
+      message: req.str("auth.verify_success"),
       data: user,
       token,
     }),
@@ -114,7 +113,7 @@ const logout = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "Logout successful",
+      message: req.str("auth.logout_success"),
     }),
   );
 });
@@ -127,12 +126,11 @@ const refreshTokens = catchAsync(async (req: Request, res: Response) => {
     deviceName: req.device?.deviceName || "Unknown Device",
     userAgent: req.device?.userAgent || req.get("User-Agent"),
     ipAddress: req.device?.ip,
-
   });
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "Refresh token successful",
+      message: req.str("auth.refresh_token_success"),
       token,
     }),
   );
@@ -148,7 +146,7 @@ const forgotPassword = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "Password reset email sent",
+      message: req.str("auth.forgot_password_sent"),
     }),
   );
 });
@@ -159,7 +157,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "Password reset successful",
+      message: req.str("auth.reset_password_success"),
     }),
   );
 });
@@ -171,7 +169,7 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "Password changed successfully",
+      message: req.str("auth.change_password_success"),
     }),
   );
 });
@@ -182,7 +180,7 @@ const deleteAccount = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "Account deleted successfully",
+      message: req.str("auth.delete_account_success"),
     }),
   );
 });
@@ -196,7 +194,7 @@ const reqVerifyAccount = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "Verification email sent",
+      message: req.str("auth.verify_email_sent"),
     }),
   );
 });
@@ -210,7 +208,7 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "Verification Email Re-Sent!",
+      message: req.str("auth.resend_otp_success"),
     }),
   );
 });

@@ -8,23 +8,19 @@ interface responseInterface {
 }
 
 export default (response: responseInterface) => {
-  const {
-    success,
-    status,
-    message,
-    data = {},
-    type,
-    token,
-  } = response;
+  const { success, status, message, data = {}, type, token } = response;
+
+  const isSuccess =
+    typeof success === "boolean" ? success : status >= 200 && status < 300;
 
   return {
-    success: success || (status >= 200 && status < 300),
-    status,
+    success: isSuccess,
+    status: status,
     message,
     response: {
       ...(type && { type }),
       data,
-      ...(token && { tokens: token })
+      ...(token && { tokens: token }),
     },
   };
 };

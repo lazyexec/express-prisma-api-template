@@ -3,7 +3,6 @@ import httpStatus from "http-status";
 import ApiError from "../utils/ApiError";
 import logger from "../utils/logger";
 import type { Request, Response, NextFunction } from "express";
-import { Prisma } from "../../generated/prisma/client";
 
 const errorConverter = (
   err: any,
@@ -40,7 +39,7 @@ const errorHandler = (
 
   const response = {
     success: false,
-    code: status,
+    status,
     message,
     ...(env.DEBUG && { stack: err.stack }),
   };

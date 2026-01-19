@@ -7,6 +7,7 @@ import helmet from "helmet";
 import "./configs/passport";
 import passport from "passport";
 import deviceMiddleware from "./middlewares/device";
+import i18nMiddleware from "./middlewares/i18nMiddleware";
 import webhookRouter from "./modules/stripe/stripe.route";
 import morgan from "morgan";
 import cors from "cors";
@@ -51,6 +52,7 @@ app.use(passport.initialize());
 
 // // gzip compression
 app.use(deviceMiddleware);
+app.use(i18nMiddleware);
 app.use(compression());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use("/api/v1", v1Router);

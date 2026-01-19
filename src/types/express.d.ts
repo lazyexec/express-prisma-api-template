@@ -1,4 +1,3 @@
-
 import { IUser } from "../modules/user/user.interface";
 
 export interface DeviceInfo {
@@ -43,19 +42,23 @@ export interface DeviceInfo {
   };
 }
 
-
 declare global {
   namespace Express {
     interface User extends IUser {
       id?: string;
       role?: string;
       name?: string;
-      fcmToken?: string
+      fcmToken?: string;
     }
 
     interface Request {
       device?: DeviceInfo;
       rawBody?: string;
+      language?: string;
+      str: (
+        key: import("../utils/i18n").I18nKey,
+        params?: Record<string, string | number>,
+      ) => string;
     }
   }
 }

@@ -15,9 +15,9 @@ const getProfile = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "User profile retrieved successfully",
+      message: req.str("user.profile_retrieved"),
       data: user,
-    })
+    }),
   );
 });
 
@@ -32,9 +32,9 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "User profile Updated successfully",
+      message: req.str("user.profile_updated"),
       data: user,
-    })
+    }),
   );
 });
 
@@ -51,9 +51,9 @@ const queryAllUsers = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "Users retrieved successfully",
+      message: req.str("user.users_retrieved"),
       data: users,
-    })
+    }),
   );
 });
 
@@ -63,9 +63,9 @@ const restrictUser = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "User restricted successfully",
+      message: req.str("user.user_restricted"),
       data: user,
-    })
+    }),
   );
 });
 
@@ -75,9 +75,9 @@ const unrestrictUser = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "User unrestricted successfully",
+      message: req.str("user.user_unrestricted"),
       data: user,
-    })
+    }),
   );
 });
 
@@ -90,9 +90,9 @@ const getProfileById = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "User profile retrieved successfully",
+      message: req.str("user.profile_retrieved"),
       data: user,
-    })
+    }),
   );
 });
 
@@ -102,9 +102,9 @@ const addUser = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "User profile Added successfully",
+      message: req.str("user.user_added"),
       data: user,
-    })
+    }),
   );
 });
 
@@ -114,9 +114,9 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "User Deleted successfully",
+      message: req.str("user.user_deleted"),
       data: {},
-    })
+    }),
   );
 });
 
@@ -126,9 +126,9 @@ const recoverUser = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
-      message: "User Recovered successfully",
+      message: req.str("user.user_recovered"),
       data: {},
-    })
+    }),
   );
 });
 
