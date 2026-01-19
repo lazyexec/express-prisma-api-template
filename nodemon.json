@@ -1,6 +1,11 @@
 {
-  "watch": ["src"],
+  "watch": [
+    "src"
+  ],
   "ext": "ts",
-  "ignore": ["output"],
+  "ignore": [
+    "output",
+    "src/docs/swagger.json"
+  ],
   "exec": "tsx ./src/index.ts"
 }

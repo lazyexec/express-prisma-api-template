@@ -6,32 +6,9 @@ import transactionRouter from "../../transaction/transaction.route";
 
 const mainRouter: Router = express.Router();
 
-interface routeObjects {
-  path: string;
-  route: Router;
-}
-
-const routes: routeObjects[] = [
-  {
-    path: "/auth",
-    route: authRouter,
-  },
-  {
-    path: "/user",
-    route: userRouter,
-  },
-  {
-    path: "/setting",
-    route: settingsRouter,
-  },
-  {
-    path: "/transaction",
-    route: transactionRouter,
-  },
-];
-
-routes.forEach((routeProvide: routeObjects) => {
-  mainRouter.use(routeProvide.path, routeProvide.route);
-});
+mainRouter.use("/auth", authRouter);
+mainRouter.use("/user", userRouter);
+mainRouter.use("/setting", settingsRouter);
+mainRouter.use("/transaction", transactionRouter);
 
 export default mainRouter;

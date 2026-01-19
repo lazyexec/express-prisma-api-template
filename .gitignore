@@ -6,3 +6,4 @@ dist
 /src/generated/prisma
 generated
 prisma/migrations
+src/docs/swagger.json
