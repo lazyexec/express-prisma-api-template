@@ -1,5 +1,4 @@
 import { z } from "zod";
-import validator from "../../utils/validation";
 
 const getAllTransactions = {
   query: z.object({
@@ -20,8 +19,8 @@ const getClinicTransactions = {
 
 const getTransaction = {
   params: z.object({
-    transactionId: z.string().refine(validator.objectId, {
-      message: "must be a valid mongo id"
+    transactionId: z.uuid({
+      message: "must be a valid uuid"
     }),
   }),
 };

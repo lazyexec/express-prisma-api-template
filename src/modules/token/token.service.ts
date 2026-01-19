@@ -8,6 +8,8 @@ import { IToken } from "./token.interface";
 import { tokenType } from "../../../generated/prisma/enums";
 import crypto from "crypto";
 import logger from "../../utils/logger";
+import type { CookieOptions, Response } from "express";
+import variables from "../../configs/variables";
 
 const saveToken = async (opts: {
   userId: string;
@@ -53,13 +55,21 @@ const saveToken = async (opts: {
       metadata,
       isRevoked: false,
       useCount: 0,
-      expiresAt
+      expiresAt,
     },
   });
 };
 
 const generateLoginTokens = async (opts: IToken) => {
-  const { userId, deviceId, deviceName, ipAddress, userAgent, rememberMe, metadata } = opts;
+  const {
+    userId,
+    deviceId,
+    deviceName,
+    ipAddress,
+    userAgent,
+    rememberMe,
+    metadata,
+  } = opts;
 
   const accessToken = jwt.generateToken(
     { sub: userId, type: tokenType.access },
@@ -127,7 +137,7 @@ const refreshAuth = async (refreshToken: string, opts: IToken) => {
   }
 
   if (tokenDoc.expiresAt && tokenDoc.expiresAt.getTime() < Date.now()) {
-    await prisma.token.delete({ where: { id: tokenDoc.id } }).catch(() => { });
+    await prisma.token.delete({ where: { id: tokenDoc.id } }).catch(() => {});
     throw new ApiError(status.FORBIDDEN, "Refresh token expired.");
   }
 
@@ -152,7 +162,7 @@ const refreshAuth = async (refreshToken: string, opts: IToken) => {
 
     throw new ApiError(
       status.FORBIDDEN,
-      "Token reuse detected - all sessions revoked for security"
+      "Token reuse detected - all sessions revoked for security",
     );
   }
 
@@ -249,7 +259,8 @@ const verifyAccessToken = (rawAccessToken: string) => {
   try {
     const payload = jwt.verifyToken(rawAccessToken);
     if (!payload) throw new Error("invalid token");
-    if (payload.type !== tokenType.access) throw new Error("invalid token type");
+    if (payload.type !== tokenType.access)
+      throw new Error("invalid token type");
     return payload;
   } catch (err) {
     throw new ApiError(status.UNAUTHORIZED, "Invalid access token.");
@@ -318,6 +329,31 @@ const cleanupExpiredTokens = async () => {
   return result.count;
 };
 
+const setAuthCookies = (
+  res: Response,
+  token: {
+    access: { token: string; expiresAt: Date };
+    refresh: { token: string; expiresAt: Date };
+  },
+) => {
+  const cookieOptions: CookieOptions = {
+    httpOnly: true,
+    secure: !variables.DEBUG,
+    sameSite: variables.DEBUG ? "lax" : "none",
+  };
+
+  res.cookie("accessToken", token.access.token, {
+    ...cookieOptions,
+    expires: token.access.expiresAt,
+  });
+
+  res.cookie("refreshToken", token.refresh.token, {
+    ...cookieOptions,
+    expires: token.refresh.expiresAt,
+    path: "/api/v1/auth/refresh-tokens",
+  });
+};
+
 export default {
   generateLoginTokens,
   refreshAuth,
@@ -327,4 +363,5 @@ export default {
   listUserSessions,
   revokeSession,
   cleanupExpiredTokens,
+  setAuthCookies
 };

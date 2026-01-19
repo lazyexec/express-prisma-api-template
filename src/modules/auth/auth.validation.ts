@@ -8,7 +8,8 @@ const register = {
     lastName: z.string().min(3).max(30),
     email: z.string().email(),
     password: z.string().refine(validator.password, {
-      message: "password must be at least 8 characters and contain at least 1 letter and 1 number",
+      message:
+        "password must be at least 8 characters and contain at least 1 letter and 1 number",
     }),
     role: z.enum(roles as [string, ...string[]]),
   }),
@@ -31,13 +32,13 @@ const verifyAccount = {
 
 const logout = {
   body: z.object({
-    refreshToken: z.string(),
+    refreshToken: z.string().optional(),
   }),
 };
 
 const refreshTokens = {
   body: z.object({
-    refreshToken: z.string(),
+    refreshToken: z.string().optional(),
   }),
 };
 
@@ -52,7 +53,8 @@ const resetPassword = {
     email: z.string().email(),
     otp: z.string(),
     password: z.string().refine(validator.password, {
-      message: "password must be at least 8 characters and contain at least 1 letter and 1 number",
+      message:
+        "password must be at least 8 characters and contain at least 1 letter and 1 number",
     }),
   }),
 };
@@ -70,6 +72,30 @@ const resendOtp = {
   }),
 };
 
+const oauth = {
+  params: z.object({
+    provider: z.string(),
+  }),
+};
+
+const oauthCallback = {
+  params: z.object({
+    provider: z.string(),
+  }),
+};
+
+const loginWithOAuth = {
+  body: z.object({
+    provider: z.enum(["google", "apple"]),
+    oauthId: z.string(),
+    firstName: z.string(),
+    lastName: z.string().optional(),
+    email: z.string().email(),
+    avatar: z.string().optional(),
+    fcmToken: z.string().optional(),
+  }),
+};
+
 export default {
   register,
   login,
@@ -80,4 +106,7 @@ export default {
   resetPassword,
   changePassword,
   resendOtp,
+  oauth,
+  oauthCallback,
+  loginWithOAuth,
 };

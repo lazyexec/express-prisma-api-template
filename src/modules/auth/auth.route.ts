@@ -15,47 +15,65 @@ router.post(
   "/register",
   uploadAll,
   validate(authValidation.register),
-  authController.register
+  authController.register,
 );
 router.post("/login", validate(authValidation.login), authController.login);
 router.post(
   "/verify-account",
   validate(authValidation.verifyAccount),
-  authController.verifyAccount
+  authController.verifyAccount,
 );
 router.post("/logout", validate(authValidation.logout), authController.logout);
 router.post(
   "/refresh-tokens",
   validate(authValidation.refreshTokens),
-  authController.refreshTokens
+  authController.refreshTokens,
 );
 router.post(
   "/forgot-password",
   validate(authValidation.forgotPassword),
-  authController.forgotPassword
+  authController.forgotPassword,
 );
 router.post(
   "/reset-password",
   validate(authValidation.resetPassword),
-  authController.resetPassword
+  authController.resetPassword,
 );
 router.post(
   "/change-password",
   auth("common"),
   validate(authValidation.changePassword),
-  authController.changePassword
+  authController.changePassword,
 );
 
 router.post(
   "/req-verify-account",
   auth("common"),
-  authController.reqVerifyAccount
+  authController.reqVerifyAccount,
 );
 
 router.post(
   "/resend-otp",
   validate(authValidation.resendOtp),
-  authController.resendOtp
+  authController.resendOtp,
+);
+
+router.post(
+  "/oauth/:provider",
+  validate(authValidation.oauth),
+  authController.oauth,
+);
+
+router.get(
+  "/oauth/callback/:provider",
+  validate(authValidation.oauthCallback),
+  authController.oauthCallback,
+);
+
+router.post(
+  "/mobile/oauth",
+  validate(authValidation.loginWithOAuth),
+  authController.loginWithOAuth,
 );
 
 router.delete("/delete-me", auth("common"), authController.deleteAccount);

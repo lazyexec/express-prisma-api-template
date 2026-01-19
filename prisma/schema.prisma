@@ -41,6 +41,8 @@ model User {
   fcmToken           String?
   phoneNumber        String?
   countryCode        String?
+  googleId           String?       @unique
+  appleId            String?       @unique
   // Status
   isRestricted       Boolean       @default(false)
   restrictionReason  String?

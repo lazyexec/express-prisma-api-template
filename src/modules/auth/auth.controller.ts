@@ -8,6 +8,8 @@ import response from "../../utils/response";
 import tokenService from "../token/token.service";
 import { IUser } from "../user/user.interface";
 import logger from "../../utils/logger";
+import passport from "passport";
+import variables from "../../configs/variables";
 
 const register = catchAsync(async (req: Request, res: Response) => {
   await authService.register(req.body);
@@ -57,6 +59,8 @@ const login = catchAsync(async (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 
+  tokenService.setAuthCookies(res, token);
+
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
@@ -86,6 +90,7 @@ const verifyAccount = catchAsync(async (req: Request, res: Response) => {
       isBot: req.device?.isBot,
     },
   });
+  tokenService.setAuthCookies(res, token);
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
@@ -97,7 +102,7 @@ const verifyAccount = catchAsync(async (req: Request, res: Response) => {
 });
 
 const logout = catchAsync(async (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
+  const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
   const userId = req.user?.id; // From auth middleware
 
   if (refreshToken) {
@@ -110,6 +115,9 @@ const logout = catchAsync(async (req: Request, res: Response) => {
     ip: req.device?.ip,
   });
 
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken", { path: "/api/v1/auth/refresh-tokens" });
+
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
@@ -119,14 +127,19 @@ const logout = catchAsync(async (req: Request, res: Response) => {
 });
 
 const refreshTokens = catchAsync(async (req: Request, res: Response) => {
-  const refreshToken = req.body.refreshToken;
+  const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
+  console.log("refreshToken", refreshToken);
+  if (!refreshToken) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Refresh token is required");
+  }
   const token = await tokenService.refreshAuth(refreshToken, {
-    userId: user?.id!,
+    userId: "", // Dummy value, ignored by service which extracts ID from token
     deviceId: req.device?.deviceId,
     deviceName: req.device?.deviceName || "Unknown Device",
     userAgent: req.device?.userAgent || req.get("User-Agent"),
     ipAddress: req.device?.ip,
   });
+  tokenService.setAuthCookies(res, token);
   res.status(httpStatus.OK).json(
     response({
       status: httpStatus.OK,
@@ -213,6 +226,109 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
   );
 });
 
+const oauth = catchAsync(async (req: Request, res: Response, next: any) => {
+  const { provider } = req.params;
+  if (!provider) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Provider is required");
+  }
+  // Google requires 'profile' and 'email'. Apple behavior varies but 'email' 'name' is standard.
+  const scope = provider === "google" ? ["profile", "email"] : [];
+  passport.authenticate(provider, { scope, session: false })(req, res, next);
+});
+
+const oauthCallback = catchAsync(
+  async (req: Request, res: Response, next: any) => {
+    const { provider } = req.params;
+    if (!provider) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Provider is required");
+    }
+
+    passport.authenticate(
+      provider,
+      { session: false },
+      async (err: any, user: any, info: any) => {
+        if (err) {
+          return next(err);
+        }
+        if (!user) {
+          return res.redirect(
+            `${process.env.FRONTEND_URL}/login?error=auth_failed`,
+          );
+        }
+
+        try {
+          const token = await tokenService.generateLoginTokens({
+            userId: user.id,
+            deviceId: req.device?.deviceId,
+            deviceName: req.device?.deviceName || "Unknown Device",
+            userAgent: req.device?.userAgent || req.get("User-Agent"),
+            ipAddress: req.device?.ip,
+            rememberMe: true,
+          });
+
+          tokenService.setAuthCookies(res, token);
+
+          return res.redirect(
+            `${variables.FRONTEND_URL}/login?success=auth_success`,
+          );
+        } catch (error) {
+          return next(error);
+        }
+      },
+    )(req, res, next);
+  },
+);
+
+const loginWithOAuth = catchAsync(async (req: Request, res: Response) => {
+  const body = req.body;
+  const result = await authService.loginWithOAuth(body);
+
+  const token = await tokenService.generateLoginTokens({
+    userId: result.id, // Now accessing result.user.id
+    deviceId: req.device?.deviceId,
+    deviceName: req.device?.deviceName,
+    userAgent: req.device?.userAgent,
+    ipAddress: req.device?.ip,
+    rememberMe: true,
+    metadata: {
+      fingerprint: req.device?.fingerprint,
+      deviceType: req.device?.deviceType,
+      browser: req.device?.browser,
+      os: req.device?.os,
+      timezone: req.device?.timezone,
+      isBot: req.device?.isBot,
+    },
+  });
+
+  // Update FCM token if provided
+  if (body.fcmToken) {
+    await userService.updateUser(
+      result.id,
+      { fcmToken: body.fcmToken },
+      {},
+    );
+  }
+
+  logger.info("User logged in via OAuth", {
+    userId: result.id,
+    email: result.email,
+    provider: body.provider,
+    deviceName: req.device?.deviceName,
+    ip: req.device?.ip,
+  });
+
+  // tokenService.setAuthCookies(res, token);
+
+  res.status(httpStatus.OK).json(
+    response({
+      status: httpStatus.OK,
+      message: req.str("auth.login_success"),
+      data: result,
+      token,
+    }),
+  );
+});
+
 export default {
   register,
   login,
@@ -222,7 +338,10 @@ export default {
   forgotPassword,
   resetPassword,
   changePassword,
-  deleteAccount,
   reqVerifyAccount,
   resendOtp,
+  oauth,
+  oauthCallback,
+  loginWithOAuth,
+  deleteAccount,
 };

@@ -1,13 +1,38 @@
 import { ExtractJwt, Strategy as JwtStrategy } from "passport-jwt";
+import AppleStrategy from "passport-apple";
+import GoogleStrategy from "passport-google-oauth20";
 import config from "./variables";
 import prisma from "./prisma";
+import httpStatus from "http-status";
 import { tokenType } from "./tokens";
 import passport from "passport";
 import logger from "../utils/logger";
+import ApiError from "../utils/ApiError";
 
 const jwtOptions = {
   secretOrKey: config.jwt.secret,
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  jwtFromRequest: ExtractJwt.fromExtractors([
+    ExtractJwt.fromAuthHeaderAsBearerToken(),
+    (req: any) => {
+      let token = null;
+      if (req && req.cookies) {
+        token = req.cookies["accessToken"];
+      }
+      return token;
+    },
+  ]),
+};
+
+const appleOptions = {
+  clientID: config.apple.clientId,
+  clientSecret: config.apple.clientSecret,
+  callbackURL: config.apple.callbackUrl,
+};
+
+const googleOptions = {
+  clientID: config.google.clientId,
+  clientSecret: config.google.clientSecret,
+  callbackURL: config.google.callbackUrl,
 };
 
 const jwtVerify = async (payload: any, done: any) => {
@@ -43,9 +68,133 @@ const jwtVerify = async (payload: any, done: any) => {
   }
 };
 
+const googleVerify = async (
+  accessToken: string,
+  refreshToken: string,
+  profile: any,
+  done: any,
+) => {
+  try {
+    const email = profile.emails?.[0]?.value;
+    if (!email) {
+      return done(
+        new ApiError(
+          httpStatus.BAD_REQUEST,
+          "No email found in Google profile",
+        ),
+        false,
+      );
+    }
+    let user = await prisma.user.findFirst({
+      where: { email },
+    });
+
+    const googleAvatar = profile.photos?.[0]?.value;
+    const defaultAvatar = "/uploads/users/user.png";
+
+    if (user) {
+      const dataToUpdate: any = {};
+      if (!user.googleId) {
+        dataToUpdate.googleId = profile.id;
+      }
+      // Update avatar if user has no avatar or has the default avatar
+      if (googleAvatar && (!user.avatar || user.avatar === defaultAvatar)) {
+        dataToUpdate.avatar = googleAvatar;
+      }
+
+      if (Object.keys(dataToUpdate).length > 0) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: dataToUpdate,
+        });
+      }
+    } else {
+      user = await prisma.user.create({
+        data: {
+          email,
+          googleId: profile.id,
+          firstName: profile.name?.givenName,
+          lastName: profile.name?.familyName,
+          avatar: googleAvatar || defaultAvatar,
+          isEmailVerified: true,
+        },
+      });
+    }
+
+    done(null, user);
+  } catch (error: any) {
+    logger.error("Google verification error", { error: error.message });
+    done(error, false);
+  }
+};
+
+const appleVerify = async (
+  accessToken: string,
+  refreshToken: string,
+  idToken: any,
+  profile: any,
+  done: any,
+) => {
+  try {
+    const email = profile?.email || idToken?.email;
+    const appleId = profile?.id || idToken?.sub;
+
+    if (!email || !appleId) {
+      if (appleId) {
+        const userByAppleId = await prisma.user.findUnique({
+          where: { appleId },
+        });
+        if (userByAppleId) return done(null, userByAppleId);
+      }
+      return done(
+        new ApiError(httpStatus.BAD_REQUEST, "No email or Apple ID found"),
+        false,
+      );
+    }
+
+    let user = await prisma.user.findFirst({
+      where: { email },
+    });
+
+    if (user) {
+      if (!user.appleId) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { appleId },
+        });
+      }
+    } else {
+      user = await prisma.user.create({
+        data: {
+          email,
+          appleId,
+          firstName: profile?.name?.firstName,
+          lastName: profile?.name?.lastName,
+          isEmailVerified: true,
+        },
+      });
+    }
+
+    done(null, user);
+  } catch (error: any) {
+    logger.error("Apple verification error", { error: error.message });
+    done(error, false);
+  }
+};
+
 const jwtStrategy = new JwtStrategy(jwtOptions, jwtVerify);
+const appleStrategy = new AppleStrategy.Strategy(
+  appleOptions as any,
+  appleVerify,
+);
+const googleStrategy = new GoogleStrategy.Strategy(
+  googleOptions as any,
+  googleVerify,
+);
 
 passport.use(jwtStrategy);
+passport.use(appleStrategy);
+passport.use(googleStrategy);
 
 export default {
   jwtStrategy,

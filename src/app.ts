@@ -15,6 +15,7 @@ import path from "path";
 import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocs from "./docs/swagger";
+import cookieParser from "cookie-parser";
 
 const app: Application = express();
 // Rate Limiter
@@ -48,6 +49,7 @@ app.use(express.json({ limit: "50mb" }));
 app.use(helmet());
 // Parse urlencoded request body
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(passport.initialize());
 
 // // gzip compression

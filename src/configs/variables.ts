@@ -82,6 +82,8 @@ const envSchema = z
       .boolean()
       .default(false)
       .describe("Is Multi Language"),
+    APPLE_CLIENT_ID: z.string().optional().describe("Apple Client ID"),
+    APPLE_CLIENT_SECRET: z.string().optional().describe("Apple Client Secret"),
   })
   .passthrough();
 
@@ -170,8 +172,12 @@ const env = {
   google: {
     clientId: value.GOOGLE_CLIENT_ID,
     clientSecret: value.GOOGLE_CLIENT_SECRET,
-    redirectUri:
-      backendUrl + "/api/v1/integration/oauth/callback/google_calendar",
+    callbackUrl: backendUrl + "/api/v1/auth/oauth/callback/google",
+  },
+  apple: {
+    clientId: value.APPLE_CLIENT_ID,
+    clientSecret: value.APPLE_CLIENT_SECRET,
+    callbackUrl: backendUrl + "/api/v1/auth/oauth/callback/apple",
   },
 };
 export default env;

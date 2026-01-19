@@ -134,7 +134,7 @@ const forgotPassword = async (email: string) => {
 const resetPassword = async (
   email: string,
   otp: string,
-  newPassword: string
+  newPassword: string,
 ) => {
   const user = await prisma.user.findFirst({
     where: { email, isDeleted: false },
@@ -168,7 +168,7 @@ const resetPassword = async (
 const changePassword = async (
   userId: any,
   oldPassword: string,
-  newPassword: string
+  newPassword: string,
 ) => {
   const user = await prisma.user.findFirst({
     where: { id: userId, isDeleted: false },
@@ -180,7 +180,7 @@ const changePassword = async (
   if (oldPassword === newPassword) {
     throw new ApiError(
       http.BAD_REQUEST,
-      "New password must be different from the old password"
+      "New password must be different from the old password",
     );
   }
 
@@ -233,7 +233,7 @@ const reqVerifyAccount = async (user: any) => {
     if (Date.now() < resendAllowedAt) {
       throw new ApiError(
         http.TOO_MANY_REQUESTS,
-        "Please wait before requesting a new verification code"
+        "Please wait before requesting a new verification code",
       );
     }
   }
@@ -281,7 +281,7 @@ const resendOtp = async (email: string) => {
     if (Date.now() < resendAllowedAt) {
       throw new ApiError(
         http.TOO_MANY_REQUESTS,
-        "Please wait before requesting a new verification code"
+        "Please wait before requesting a new verification code",
       );
     }
   }
@@ -301,6 +301,45 @@ const resendOtp = async (email: string) => {
   }
 };
 
+const loginWithOAuth = async (body: any) => {
+  const {
+    provider,
+    oauthId,
+    firstName,
+    lastName = "",
+    email,
+    avatar = "",
+    fcmToken = "",
+  } = body;
+
+  // Determine which field to check based on provider
+  const providerField = provider === "google" ? "googleId" : "appleId";
+
+  const user = await prisma.user.findFirst({
+    where: {
+      email,
+      [providerField]: oauthId, // Check specific provider ID
+      isDeleted: false,
+    },
+  });
+
+  if (!user) {
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        firstName,
+        lastName,
+        avatar,
+        isEmailVerified: true,
+        [providerField]: oauthId, // Set the correct provider ID
+      },
+    });
+    return newUser;
+  }
+
+  return user;
+};
+
 export default {
   register,
   verifyAccount,
@@ -311,4 +350,5 @@ export default {
   deleteAccount,
   resendOtp,
   reqVerifyAccount,
+  loginWithOAuth,
 };
