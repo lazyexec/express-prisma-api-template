@@ -22,7 +22,7 @@ if (!env.DEBUG) {
     rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 200,
-    })
+    }),
   );
 }
 // For Exporting Public Files to User
@@ -37,7 +37,7 @@ if (env.DEBUG) {
 app.use(
   cors({
     origin: env.FRONTEND_URL,
-  })
+  }),
 );
 // Webhook Route for raw body
 app.use("/api/v1/webhook", webhookRouter);
@@ -58,6 +58,7 @@ app.use("/api/v1", v1Router);
 app.use(errorConverter);
 app.use(errorHandler);
 app.get("/health", (req, res) => {
+  console.log(req.device);
   res.send("Api is Healthy");
 });
 export default app;

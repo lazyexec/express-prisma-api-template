@@ -11,7 +11,6 @@ class ApiError extends Error {
     stack: string = ""
   ) {
     super(message);
-
     this.status = status;
     this.isOperational = isOperational;
 

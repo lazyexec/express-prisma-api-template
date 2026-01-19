@@ -1,11 +1,14 @@
 import type { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import { DeviceInfo } from "../types/express";
+import ApiError from "../utils/ApiError";
+import httpStatus from "http-status";
 
 /*
 SHOULD ALLOW BOT
 */
-const SHOULD_ALLOW_BOT = false;
+
+const SHOULD_ALLOW_BOT = true;
 
 const deviceMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   const userAgent = req.get("User-Agent") || "Unknown Device";
@@ -88,6 +91,10 @@ const deviceMiddleware = (req: Request, _res: Response, next: NextFunction) => {
     headers,
   };
 
+  if (SHOULD_ALLOW_BOT && parsedUA.isBot) {
+    next(new ApiError(httpStatus.FORBIDDEN, "Bots are not allowed"));
+  }
+
   next();
 };
 
@@ -131,7 +138,7 @@ function parseUserAgent(userAgent: string): {
 
   // Detect bots
   const isBot = /bot|crawler|spider|scraper|curl|wget|python|java|http/i.test(
-    userAgent
+    userAgent,
   );
 
   // Detect device type
@@ -169,7 +176,7 @@ function parseUserAgent(userAgent: string): {
     browser = "Opera";
     browserVersion = extractVersion(
       ua,
-      ua.includes("opr/") ? "opr/" : "opera/"
+      ua.includes("opr/") ? "opr/" : "opera/",
     );
   } else if (ua.includes("msie") || ua.includes("trident/")) {
     browser = "Internet Explorer";
@@ -207,7 +214,7 @@ function parseUserAgent(userAgent: string): {
     browserVersion,
     os,
     osVersion,
-    deviceType
+    deviceType,
   );
 
   return {
@@ -232,7 +239,7 @@ function createDeviceName(
   browserVersion: string,
   os: string,
   osVersion: string,
-  deviceType: string
+  deviceType: string,
 ): string {
   if (deviceType === "bot") {
     return "Bot/Crawler";
@@ -283,7 +290,6 @@ function createDeviceFingerprint(data: {
 }
 
 function checkIfTrusted(userAgent: string, ip: string | undefined): boolean {
-  if (!SHOULD_ALLOW_BOT) return false;
   const trustedBots = [
     "googlebot",
     "bingbot",

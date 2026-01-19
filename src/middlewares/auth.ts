@@ -1,7 +1,6 @@
 import httpStatus from "http-status";
 import ApiError from "../utils/ApiError";
 import { roleRights } from "../configs/roles";
-import prisma from "../configs/prisma";
 import type { Request, Response, NextFunction } from "express";
 import passport from "passport";
 import logger from "../utils/logger";
