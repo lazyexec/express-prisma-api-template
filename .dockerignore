@@ -1,0 +1,12 @@
+dist
+node_modules
+coverage
+.git
+.gitignore
+.dockerignore
+.env
+.env.*
+! .env.example
+npm-debug.log
+logs
+generated

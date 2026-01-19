@@ -43,7 +43,7 @@ const verifyToken = (token: string): JWTPayload => {
 
 const generateToken = (
   payload: Omit<JWTPayload, "iat" | "exp">,
-  expiresIn = env.jwt.expiryAccessToken
+  expiresIn: string = env.jwt.expiryAccessToken
 ): string => {
   const jti = payload.jti || crypto.randomBytes(16).toString("hex");
 
@@ -54,7 +54,7 @@ const generateToken = (
     },
     env.jwt.secret,
     {
-      expiresIn,
+      expiresIn: expiresIn as any,
       algorithm: "HS256",
       issuer: env.jwt.issuer,
       audience: env.jwt.audience,

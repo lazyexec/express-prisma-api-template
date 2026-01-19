@@ -4,7 +4,6 @@ import { roleRights } from "../configs/roles";
 import prisma from "../configs/prisma";
 import type { Request, Response, NextFunction } from "express";
 import passport from "passport";
-import all_permissions from "../configs/permissions";
 import logger from "../utils/logger";
 
 const verifyCallback =

@@ -1,89 +1,73 @@
-import Joi from "joi";
+import { z } from "zod";
 import { roles } from "../../configs/roles";
-import validator from "../../utils/validator";
+import validator from "../../utils/validation";
 
 const register = {
-  body: Joi.object()
-    .keys({
-      firstName: Joi.string().min(3).max(30).required(),
-      lastName: Joi.string().min(3).max(30).required(),
-      email: Joi.string().required(),
-      password: Joi.custom(validator.password).required(),
-      role: Joi.string()
-        .valid(...roles)
-        .required(),
-    })
-    .required(),
+  body: z.object({
+    firstName: z.string().min(3).max(30),
+    lastName: z.string().min(3).max(30),
+    email: z.string().email(),
+    password: z.string().refine(validator.password, {
+      message: "password must be at least 8 characters and contain at least 1 letter and 1 number",
+    }),
+    role: z.enum(roles as [string, ...string[]]),
+  }),
 };
 
 const login = {
-  body: Joi.object()
-    .keys({
-      email: Joi.string().required(),
-      password: Joi.string().required(),
-      fcmToken: Joi.string().optional(),
-    })
-    .required(),
+  body: z.object({
+    email: z.string().email(),
+    password: z.string(),
+    fcmToken: z.string().optional(),
+  }),
 };
 
 const verifyAccount = {
-  body: Joi.object()
-    .keys({
-      email: Joi.string().required(),
-      code: Joi.string().required(),
-    })
-    .required(),
+  body: z.object({
+    email: z.string().email(),
+    code: z.string(),
+  }),
 };
 
 const logout = {
-  body: Joi.object()
-    .keys({
-      refreshToken: Joi.string().required(),
-    })
-    .required(),
+  body: z.object({
+    refreshToken: z.string(),
+  }),
 };
 
 const refreshTokens = {
-  body: Joi.object()
-    .keys({
-      refreshToken: Joi.string().required(),
-    })
-    .required(),
+  body: z.object({
+    refreshToken: z.string(),
+  }),
 };
 
 const forgotPassword = {
-  body: Joi.object()
-    .keys({
-      email: Joi.string().required(),
-    })
-    .required(),
+  body: z.object({
+    email: z.string().email(),
+  }),
 };
 
 const resetPassword = {
-  body: Joi.object()
-    .keys({
-      email: Joi.string().required(),
-      otp: Joi.string().required(),
-      password: Joi.custom(validator.password).required(),
-    })
-    .required(),
+  body: z.object({
+    email: z.string().email(),
+    otp: z.string(),
+    password: z.string().refine(validator.password, {
+      message: "password must be at least 8 characters and contain at least 1 letter and 1 number",
+    }),
+  }),
 };
 
 const changePassword = {
-  body: Joi.object()
-    .keys({
-      oldPassword: Joi.string().required(),
-      newPassword: Joi.string().min(6).max(100).required(),
-    })
-    .required(),
+  body: z.object({
+    oldPassword: z.string(),
+    newPassword: z.string().min(6).max(100),
+  }),
 };
 
 const resendOtp = {
-  body: Joi.object()
-    .keys({
-      email: Joi.string().required(),
-    })
-    .required(),
+  body: z.object({
+    email: z.string().email(),
+  }),
 };
 
 export default {

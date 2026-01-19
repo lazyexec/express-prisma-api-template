@@ -1,21 +1,19 @@
-import Joi from "joi";
+import { z } from "zod";
 
 const settingsContent = {
-  body: Joi.object().keys({
-    content: Joi.string().required().min(10).max(5000),
+  body: z.object({
+    content: z.string().min(10).max(5000),
   }),
 };
 
 const faqValidation = {
-  body: Joi.object().keys({
-    faqs: Joi.array()
-      .items(
-        Joi.object().keys({
-          question: Joi.string().required(),
-          answer: Joi.string().required(),
-        })
-      )
-      .required(),
+  body: z.object({
+    faqs: z.array(
+      z.object({
+        question: z.string(),
+        answer: z.string(),
+      })
+    ),
   }),
 };
 

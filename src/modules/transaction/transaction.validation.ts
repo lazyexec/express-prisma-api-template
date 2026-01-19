@@ -1,26 +1,28 @@
-import Joi from "joi";
-import validator from "../../utils/validator";
+import { z } from "zod";
+import validator from "../../utils/validation";
 
 const getAllTransactions = {
-  query: Joi.object().keys({
-    page: Joi.number().optional(),
-    limit: Joi.number().optional(),
-    sort: Joi.string().default("createdAt:desc"),
+  query: z.object({
+    page: z.coerce.number().optional(),
+    limit: z.coerce.number().optional(),
+    sort: z.string().default("createdAt:desc"),
   }),
 };
 
 const getClinicTransactions = {
-  query: Joi.object().keys({
-    page: Joi.number().integer().min(1).optional(),
-    limit: Joi.number().integer().min(1).max(100).optional(),
-    type: Joi.string().optional(),
-    status: Joi.string().valid("pending", "completed", "failed", "cancelled").optional(),
+  query: z.object({
+    page: z.coerce.number().int().min(1).optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    type: z.string().optional(),
+    status: z.enum(["pending", "completed", "failed", "cancelled"]).optional(),
   }),
 };
 
 const getTransaction = {
-  params: Joi.object().keys({
-    transactionId: Joi.custom(validator.objectId).required(),
+  params: z.object({
+    transactionId: z.string().refine(validator.objectId, {
+      message: "must be a valid mongo id"
+    }),
   }),
 };
 

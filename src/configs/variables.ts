@@ -1,90 +1,61 @@
 import { configDotenv } from "dotenv";
-import Joi from "joi";
+import { z } from "zod";
 configDotenv();
 
-const validator = Joi.object()
-  .keys({
-    APP_NAME: Joi.string()
-      .default("express-prisma-api-template")
-      .description("Application name"),
-    PORT: Joi.number().default(3000),
-    BACKEND_IP: Joi.string().default("localhost"),
-    SOCKET_PORT: Joi.number().default(3001), // This is for only testing purpose (Development)
-    DATABASE_URL: Joi.string().optional(),
-    NODE_ENV: Joi.string()
-      .valid("development", "production")
-      .default("development"),
-    JWT_SECRET: Joi.string().required().description("JWT Secret key"),
-    JWT_ACCESS_EXPIRY: Joi.string()
-      .default("3d")
-      .description("JWT Access Expiry time"),
-    JWT_REFRESH_EXPIRY: Joi.string()
-      .default("30d")
-      .description("JWT Refresh Expiry time"),
-    SMTP_HOST: Joi.string().required().description("SMTP Host"),
-    SMTP_PORT: Joi.number().required().description("SMTP Port"),
-    SMTP_USERNAME: Joi.string().required().description("SMTP Username"),
-    SMTP_PASSWORD: Joi.string().required().description("SMTP Password"),
-    EMAIL_FROM: Joi.string()
-      .email()
-      .required()
-      .description("Email From Address"),
-    STRIPE_SECRET_KEY: Joi.string().required().description("Stripe Secret Key"),
-    STRIPE_WEBHOOK_SECRET: Joi.string()
-      .required()
-      .description("Stripe Webhook Secret Key"),
-    // URLS
-    FRONTEND_URL: Joi.string().default("*").description("Frontend URL"),
-    BACKEND_URL: Joi.string()
-      .default(`http://${process.env.BACKEND_IP}:${process.env.PORT}`)
-      .description("Frontend URL"),
-    FIREBASE_PROJECT_ID: Joi.string()
-      .required()
-      .description("Firebase project Id"),
-    FIREBASE_PRIVATE_KEY: Joi.string()
-      .required()
-      .description("Firebase Private Key"),
-    FIREBASE_CLIENT_EMAIL: Joi.string()
-      .required()
-      .description("Firebase Client Email"),
-    GOOGLE_CLIENT_ID: Joi.string().required().description("Google Client ID"),
-    GOOGLE_CLIENT_SECRET: Joi.string()
-      .required()
-      .description("Google Client Secret"),
-    // Zoom Integration
-    ZOOM_ACCOUNT_ID: Joi.string().optional().description("Zoom Account ID"),
-    ZOOM_CLIENT_ID: Joi.string().optional().description("Zoom Client ID"),
-    ZOOM_CLIENT_SECRET: Joi.string()
-      .optional()
-      .description("Zoom Client Secret"),
-    // Xero Integration
-    XERO_CLIENT_ID: Joi.string().optional().description("Xero Client ID"),
-    XERO_CLIENT_SECRET: Joi.string()
-      .optional()
-      .description("Xero Client Secret"),
-    XERO_REDIRECT_URI: Joi.string().optional().description("Xero Redirect URI"),
-    // Mailchimp Integration
-    MAILCHIMP_API_KEY: Joi.string().optional().description("Mailchimp API Key"),
-    MAILCHIMP_SERVER_PREFIX: Joi.string()
-      .optional()
-      .description("Mailchimp Server Prefix"),
-    // Stripe Connect OAuth
-    STRIPE_CONNECT_CLIENT_ID: Joi.string()
-      .required()
-      .description("Stripe Connect Client ID"),
-    // Mailchimp OAuth
-    MAILCHIMP_CLIENT_ID: Joi.string()
-      .optional()
-      .description("Mailchimp OAuth Client ID"),
-    MAILCHIMP_CLIENT_SECRET: Joi.string()
-      .optional()
-      .description("Mailchimp OAuth Client Secret"),
-  })
-  .unknown();
+const envSchema = z.object({
+  APP_NAME: z.string().default("express-prisma-api-template").describe("Application name"),
+  PORT: z.coerce.number().default(3000),
+  BACKEND_IP: z.string().default("localhost"),
+  SOCKET_PORT: z.coerce.number().default(3001),
+  DATABASE_URL: z.string().optional(),
+  NODE_ENV: z.enum(["development", "production"]).default("development"),
+  JWT_SECRET: z.string().min(1).describe("JWT Secret key"),
+  JWT_ACCESS_EXPIRY: z.string().default("3d").describe("JWT Access Expiry time"),
+  JWT_REFRESH_EXPIRY: z.string().default("30d").describe("JWT Refresh Expiry time"),
+  SMTP_HOST: z.string().min(1).describe("SMTP Host"),
+  SMTP_PORT: z.coerce.number().describe("SMTP Port"),
+  SMTP_USERNAME: z.string().min(1).describe("SMTP Username"),
+  SMTP_PASSWORD: z.string().min(1).describe("SMTP Password"),
+  EMAIL_FROM: z.string().email().optional().describe("Email From Address"),
+  // URLS
+  FRONTEND_URL: z.string().default("*").describe("Frontend URL"),
+  BACKEND_URL: z.string().optional().describe("Backend URL"), // Will default below if not present, but Zod default is static. 
+  // We can handle dynamic default in the object construction or refine.
+  FIREBASE_PROJECT_ID: z.string().optional().describe("Firebase project Id"),
+  FIREBASE_PRIVATE_KEY: z.string().optional().describe("Firebase Private Key"),
+  FIREBASE_CLIENT_EMAIL: z.string().optional().describe("Firebase Client Email"),
+  GOOGLE_CLIENT_ID: z.string().optional().describe("Google Client ID"),
+  GOOGLE_CLIENT_SECRET: z.string().optional().describe("Google Client Secret"),
+  // Zoom Integration
+  ZOOM_ACCOUNT_ID: z.string().optional().describe("Zoom Account ID"),
+  ZOOM_CLIENT_ID: z.string().optional().describe("Zoom Client ID"),
+  ZOOM_CLIENT_SECRET: z.string().optional().describe("Zoom Client Secret"),
+  // Xero Integration
+  XERO_CLIENT_ID: z.string().optional().describe("Xero Client ID"),
+  XERO_CLIENT_SECRET: z.string().optional().describe("Xero Client Secret"),
+  XERO_REDIRECT_URI: z.string().optional().describe("Xero Redirect URI"),
+  // Mailchimp Integration
+  MAILCHIMP_API_KEY: z.string().optional().describe("Mailchimp API Key"),
+  MAILCHIMP_SERVER_PREFIX: z.string().optional().describe("Mailchimp Server Prefix"),
+  // Stripe Connect OAuth
+  STRIPE_SECRET_KEY: z.string().optional().describe("Stripe Secret Key"),
+  STRIPE_WEBHOOK_SECRET: z.string().optional().describe("Stripe Webhook Secret Key"),
+  STRIPE_CONNECT_CLIENT_ID: z.string().optional().describe("Stripe Connect Client ID"),
+  // Mailchimp OAuth
+  MAILCHIMP_CLIENT_ID: z.string().optional().describe("Mailchimp OAuth Client ID"),
+  MAILCHIMP_CLIENT_SECRET: z.string().optional().describe("Mailchimp OAuth Client Secret"),
+}).passthrough();
 
-const { value, error } = validator.validate(process.env);
+const parsed = envSchema.safeParse(process.env);
 
-if (error) throw new Error(error.message);
+if (!parsed.success) {
+  const errorMessage = parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
+  throw new Error(`Config validation error: ${errorMessage}`);
+}
+
+const value = parsed.data;
+
+const backendUrl = value.BACKEND_URL || `http://${value.BACKEND_IP}:${value.PORT}`;
 
 const env = {
   APP_NAME: value.APP_NAME,
@@ -117,7 +88,7 @@ const env = {
 
   // URLS
   FRONTEND_URL: value.FRONTEND_URL,
-  BACKEND_URL: value.BACKEND_URL,
+  BACKEND_URL: backendUrl,
   // Firebase Config
   firebase: {
     projectId: value.FIREBASE_PROJECT_ID || "",
@@ -157,7 +128,7 @@ const env = {
     clientId: value.GOOGLE_CLIENT_ID,
     clientSecret: value.GOOGLE_CLIENT_SECRET,
     redirectUri:
-      value.BACKEND_URL + "/api/v1/integration/oauth/callback/google_calendar",
+      backendUrl + "/api/v1/integration/oauth/callback/google_calendar",
   },
 };
 export default env;
