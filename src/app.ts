@@ -61,8 +61,8 @@ app.use("/api/v1", v1Router);
 
 app.use(errorConverter);
 app.use(errorHandler);
-app.get("/health", (req, res) => {
-  console.log(req.device);
-  res.send("Api is Healthy");
+app.get("/", (_, res) => {
+  res.sendFile(path.join(__dirname, "./docs/index.html"));
 });
+
 export default app;
