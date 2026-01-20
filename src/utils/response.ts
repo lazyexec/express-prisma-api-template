@@ -5,10 +5,19 @@ interface responseInterface {
   type?: string;
   data?: any;
   token?: any;
+  pagination?: any;
 }
 
 export default (response: responseInterface) => {
-  const { success, status, message, data = {}, type, token } = response;
+  const {
+    success,
+    status,
+    message,
+    data = {},
+    type,
+    token,
+    pagination,
+  } = response;
 
   const isSuccess =
     typeof success === "boolean" ? success : status >= 200 && status < 300;
@@ -21,6 +30,7 @@ export default (response: responseInterface) => {
       ...(type && { type }),
       data,
       ...(token && { tokens: token }),
+      ...(pagination && { pagination }),
     },
   };
 };

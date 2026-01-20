@@ -32,8 +32,12 @@ const validate =
         params: req.params,
       });
 
+      // Store validated data - req.query is read-only, so we use a custom property
       if (schema.body) req.body = parsedData.body;
-      if (schema.query) req.query = parsedData.query as any;
+      if (schema.query) {
+        // Store validated query in a custom property since req.query is read-only
+        (req as any).validatedQuery = parsedData.query;
+      }
       if (schema.params) req.params = parsedData.params as any;
 
       return next();
