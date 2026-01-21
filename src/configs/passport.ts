@@ -23,15 +23,18 @@ const jwtOptions = {
   ]),
 };
 
-const appleOptions = {
-  clientID: config.apple.clientId,
-  clientSecret: config.apple.clientSecret,
+const appleOptions: AppleStrategy.AuthenticateOptions = {
+  clientID: config.apple.clientId!,
+  teamID: config.apple.teamId!,
+  keyID: config.apple.keyId!,
+  privateKeyString: config.apple.privateKey,
   callbackURL: config.apple.callbackUrl,
+  passReqToCallback: false,
 };
 
-const googleOptions = {
-  clientID: config.google.clientId,
-  clientSecret: config.google.clientSecret,
+const googleOptions: GoogleStrategy.StrategyOptions = {
+  clientID: config.google.clientId!,
+  clientSecret: config.google.clientSecret!,
   callbackURL: config.google.callbackUrl,
 };
 
@@ -183,18 +186,23 @@ const appleVerify = async (
 };
 
 const jwtStrategy = new JwtStrategy(jwtOptions, jwtVerify);
-const appleStrategy = new AppleStrategy.Strategy(
-  appleOptions as any,
-  appleVerify,
-);
-const googleStrategy = new GoogleStrategy.Strategy(
-  googleOptions as any,
-  googleVerify,
-);
 
 passport.use(jwtStrategy);
-passport.use(appleStrategy);
-passport.use(googleStrategy);
+if (config.google.clientId && config.google.clientSecret) {
+  const googleStrategy = new GoogleStrategy.Strategy(googleOptions, googleVerify);
+  passport.use(googleStrategy);
+  logger.info("Google OAuth strategy registered");
+} else {
+  logger.warn("Google OAuth credentials not configured - strategy disabled");
+}
+
+if (config.apple.clientId && config.apple.teamId && config.apple.keyId && config.apple.privateKey) {
+  const appleStrategy = new AppleStrategy.Strategy(appleOptions, appleVerify);
+  passport.use(appleStrategy);
+  logger.info("Apple OAuth strategy registered");
+} else {
+  logger.warn("Apple OAuth credentials not configured - strategy disabled");
+}
 
 export default {
   jwtStrategy,

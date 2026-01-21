@@ -24,7 +24,6 @@ const doc = {
       bearerAuth: [],
     },
   ],
-
 };
 
 const outputFile = path.join(__dirname, "swagger.json");
@@ -37,7 +36,10 @@ swaggerAutogen({
     const swaggerContent = JSON.parse(fs.readFileSync(outputFile, "utf-8"));
 
     for (const pathKey in swaggerContent.paths) {
-      const segments = pathKey.split("/").filter(Boolean);
+      // Normalize path separators to forward slashes
+      const normalizedPath = pathKey.replace(/\\/g, "/");
+      const segments = normalizedPath.split("/").filter(Boolean);
+
       if (segments.length > 0) {
         let tag = segments[0];
         // Capitalize and format tag

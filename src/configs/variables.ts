@@ -82,8 +82,14 @@ const envSchema = z
       .boolean()
       .default(false)
       .describe("Is Multi Language"),
-    APPLE_CLIENT_ID: z.string().optional().describe("Apple Client ID"),
-    APPLE_CLIENT_SECRET: z.string().optional().describe("Apple Client Secret"),
+    // Apple OAuth - Updated fields
+    APPLE_CLIENT_ID: z
+      .string()
+      .optional()
+      .describe("Apple Client ID (Service ID)"),
+    APPLE_TEAM_ID: z.string().optional().describe("Apple Team ID"),
+    APPLE_KEY_ID: z.string().optional().describe("Apple Key ID"),
+    APPLE_PRIVATE_KEY: z.string().optional().describe("Apple Private Key"),
   })
   .passthrough();
 
@@ -176,7 +182,11 @@ const env = {
   },
   apple: {
     clientId: value.APPLE_CLIENT_ID,
-    clientSecret: value.APPLE_CLIENT_SECRET,
+    teamId: value.APPLE_TEAM_ID,
+    keyId: value.APPLE_KEY_ID,
+    privateKey: value.APPLE_PRIVATE_KEY
+      ? value.APPLE_PRIVATE_KEY.replace(/\\n/g, "\n")
+      : undefined,
     callbackUrl: backendUrl + "/api/v1/auth/oauth/callback/apple",
   },
 };
