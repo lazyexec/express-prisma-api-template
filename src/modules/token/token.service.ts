@@ -10,6 +10,7 @@ import crypto from "crypto";
 import logger from "../../utils/logger";
 import type { CookieOptions, Response } from "express";
 import variables from "../../configs/variables";
+import { paginate } from "../../utils/paginate";
 
 const saveToken = async (opts: {
   userId: string;
@@ -267,28 +268,20 @@ const verifyAccessToken = (rawAccessToken: string) => {
   }
 };
 
-const listUserSessions = async (userId: string) => {
-  return prisma.token.findMany({
-    where: {
-      userId,
-      type: tokenType.refresh,
-      isRevoked: false,
-      expiresAt: { gt: new Date() },
-    },
-    select: {
-      id: true,
-      deviceId: true,
-      deviceName: true,
-      ipAddress: true,
-      userAgent: true,
-      createdAt: true,
-      lastUsedAt: true,
-      expiresAt: true,
-      rememberMe: true,
-      metadata: true,
-    },
-    orderBy: { lastUsedAt: "desc" },
-  });
+const listUserSessions = async (options: any, filters: any) => {
+  const queryFilters: any = {};
+  if (filters.email) {
+    queryFilters.user = {
+      email: {
+        contains: filters.email,
+        mode: "insensitive",
+      },
+    };
+  }
+  if (filters.type) {
+    queryFilters.type = filters.type;
+  }
+  return await paginate(prisma.token, options, queryFilters);
 };
 
 const revokeSession = async (userId: string, sessionId: string) => {
