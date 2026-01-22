@@ -10,7 +10,22 @@ import crypto from "crypto";
 import logger from "../../utils/logger";
 import type { CookieOptions, Response } from "express";
 import variables from "../../configs/variables";
-import { paginate } from "../../utils/paginate";
+import { paginate, PaginationOptions } from "../../utils/paginate";
+import { OAuth2Client } from "google-auth-library";
+import jwksClient from "jwks-rsa";
+import config from "../../configs/variables";
+import httpStatus from "http-status";
+import i18n from "../../utils/i18n";
+
+const client = new OAuth2Client(config.google.clientId);
+const jwks = jwksClient({
+  jwksUri: "https://appleid.apple.com/auth/keys",
+});
+
+const getKey = async (kid: string) => {
+  const key = await jwks.getSigningKey(kid);
+  return key.getPublicKey();
+};
 
 const saveToken = async (opts: {
   userId: string;
@@ -268,8 +283,9 @@ const verifyAccessToken = (rawAccessToken: string) => {
   }
 };
 
-const listUserSessions = async (options: any, filters: any) => {
+const listUserSessions = async (options: PaginationOptions, filters: any) => {
   const queryFilters: any = {};
+  console.log(options);
   if (filters.email) {
     queryFilters.user = {
       email: {
@@ -347,6 +363,56 @@ const setAuthCookies = (
   });
 };
 
+const verifyGoogleIdToken = async (googleIdToken: string) => {
+  const ticket = await client.verifyIdToken({
+    idToken: googleIdToken,
+    audience: config.google.clientId,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, i18n.str("common.went_wrong"));
+  }
+
+  if (!payload.email || payload.email_verified !== true) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, i18n.str("common.went_wrong"));
+  }
+
+  return {
+    provider: "google" as const,
+    providerId: payload.sub,
+    email: payload.email,
+    firstName: payload.given_name,
+    lastName: payload.family_name,
+    avatar: payload.picture,
+  };
+};
+
+const verifyAppleIdToken = async (idToken: string) => {
+  const decoded = jwt.decodeToken(idToken);
+
+  if (!decoded || typeof decoded === "string") {
+    throw new ApiError(httpStatus.UNAUTHORIZED, i18n.str("common.went_wrong"));
+  }
+
+  const publicKey = await getKey(decoded.header.kid);
+
+  const payload: any = jwt.jwt.verify(idToken, publicKey, {
+    audience: config.apple.clientId,
+    issuer: "https://appleid.apple.com",
+  });
+
+  return {
+    provider: "apple" as const,
+    providerId: payload.sub,
+    email: payload.email,
+    firstName: payload.given_name || "",
+    lastName: payload.family_name || "",
+    avatar: payload.picture || null,
+  };
+};
+
 export default {
   generateLoginTokens,
   refreshAuth,
@@ -356,5 +422,8 @@ export default {
   listUserSessions,
   revokeSession,
   cleanupExpiredTokens,
-  setAuthCookies
+  setAuthCookies,
+  verifyGoogleIdToken,
+  verifyAppleIdToken,
+  // Oauth Verify
 };

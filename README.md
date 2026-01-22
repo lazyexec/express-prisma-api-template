@@ -11,11 +11,13 @@ docker compose up -d
 ```
 
 Validates:
+
 - API accessible at `http://localhost:3500`
 - PostgreSQL 18 database
 - Automated migrations and client generation
 
 Check logs:
+
 ```bash
 docker compose logs -f
 ```
@@ -25,11 +27,13 @@ docker compose logs -f
 If you prefer running without Docker.
 
 1. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 2. **Configure Environment**
+
    ```bash
    cp .env.example .env
    # Update DATABASE_URL and secrets
@@ -40,8 +44,13 @@ If you prefer running without Docker.
    npm run build:prisma
    npx prisma migrate dev
    ```
+4. **Docs Setup**
 
-4. **Run Application**
+   ```bash
+   npm run docs
+   ```
+
+5. **Run Application**
    ```bash
    npm run dev
    # or for production

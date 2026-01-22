@@ -8,14 +8,15 @@ import bcrypt from "bcrypt";
 import userService from "../user/user.service";
 import userSelect from "../user/user.select";
 import { IUser } from "../user/user.interface";
+import httpStatus from "http-status";
 
-const createUser = async (userData: IUser) => {
+const createUser = async (userData: any) => {
   return await prisma.user.create({
     data: userData,
   });
 };
 
-const restoreUser = async (userId: string, userData: IUser) => {
+const restoreUser = async (userId: string, userData: any) => {
   return await prisma.user.update({
     where: { id: userId },
     data: userData,
@@ -301,40 +302,61 @@ const resendOtp = async (email: string) => {
   }
 };
 
-const loginWithOAuth = async (body: any) => {
-  const {
-    provider,
-    oauthId,
-    firstName,
-    lastName = "",
-    email,
-    avatar = "",
-    fcmToken = "",
-  } = body;
+const loginWithOAuth = async (oauthUser: {
+  provider: "google" | "apple";
+  providerId: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+}) => {
+  const { provider, providerId, email, firstName, lastName, avatar } =
+    oauthUser;
 
-  // Determine which field to check based on provider
   const providerField = provider === "google" ? "googleId" : "appleId";
 
-  const user = await prisma.user.findFirst({
-    where: {
-      email,
-      [providerField]: oauthId, // Check specific provider ID
-      isDeleted: false,
-    },
+  // 1️⃣ Find by provider ID (MOST trusted)
+  let user = await prisma.user.findUnique({
+    where:
+      provider === "google"
+        ? { googleId: providerId }
+        : { appleId: providerId },
   });
 
+  // 2️⃣ Link by verified email
+  if (!user && email) {
+    user = await prisma.user.findUnique({ where: { email } });
+
+    if (user) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          [providerField]: providerId,
+          isEmailVerified: true,
+        },
+      });
+    }
+  }
+
+  // 3️⃣ Create new user
   if (!user) {
-    const newUser = await prisma.user.create({
+    if (!email) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Email required for first login",
+      );
+    }
+
+    user = await prisma.user.create({
       data: {
         email,
         firstName,
         lastName,
         avatar,
+        [providerField]: providerId,
         isEmailVerified: true,
-        [providerField]: oauthId, // Set the correct provider ID
       },
     });
-    return newUser;
   }
 
   return user;

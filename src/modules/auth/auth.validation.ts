@@ -88,10 +88,6 @@ const loginWithOAuth = {
   body: z.object({
     provider: z.enum(["google", "apple"]),
     oauthId: z.string(),
-    firstName: z.string(),
-    lastName: z.string().optional(),
-    email: z.string().email(),
-    avatar: z.string().optional(),
     fcmToken: z.string().optional(),
   }),
 };

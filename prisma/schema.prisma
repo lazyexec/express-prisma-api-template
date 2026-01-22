@@ -99,25 +99,19 @@ model Token {
 
 model Transaction {
   id            String   @id @default(uuid())
-  sessionId     String? // Optional for clinic purchases
-  clientId      String? // Optional for clinic purchases
-  clinicId      String? // For clinic purchase transactions
   userId        String? // User who made the transaction
   transactionId String?  @unique
   amount        Float?
-  type          String? // "appointment", "clinic_purchase", "subscription", etc.
-  method        String? // "stripe", "cash", etc.
-  status        String? // "pending", "completed", "failed", "refunded"
+  type          String?
+  method        String?
+  status        String?
   description   String?
-  meta          Json? // Store additional data like planId, stripeSessionId, etc.
+  meta          Json?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   user User? @relation(fields: [userId], references: [id], onDelete: Restrict)
 
-  @@index([sessionId])
-  @@index([clientId])
-  @@index([clinicId])
   @@index([userId])
   @@index([type])
   @@index([status])

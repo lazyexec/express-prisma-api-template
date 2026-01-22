@@ -4,11 +4,13 @@ import env from "../configs/variables";
 import logger from "./logger";
 import authLocale from "../locales/en/auth.json";
 import userLocale from "../locales/en/user.json";
+import commonLocale from "../locales/en/common.json";
 
 // Define the schema based on default locale
 type I18nSchema = {
   auth: typeof authLocale;
   user: typeof userLocale;
+  common: typeof commonLocale;
 };
 
 // Helper type to generate dot notation keys
@@ -65,7 +67,7 @@ class I18n {
     }
   }
 
-  public t(
+  public str(
     key: I18nKey,
     params?: Record<string, string | number>,
     lang: string = this.defaultLocale,

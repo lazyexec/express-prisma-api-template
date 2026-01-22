@@ -1,3 +1,9 @@
 {
-    
+  "not_found": "Resource not found",
+  "already_exists": "Resource already exists",
+  "bad_request": "Bad request",
+  "unauthorized": "Unauthorized access",
+  "forbidden": "Access forbidden",
+  "internal_error": "Internal server error",
+  "went_wrong": "Something went wrong!"
 }

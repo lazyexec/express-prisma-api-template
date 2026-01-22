@@ -66,4 +66,5 @@ export default {
   decodeToken,
   verifyToken,
   generateToken,
+  jwt
 };

@@ -31,8 +31,8 @@ const login = catchAsync(async (req: Request, res: Response) => {
   const token = await tokenService.generateLoginTokens({
     userId: user?.id!,
     deviceId: req.device?.deviceId,
-    deviceName: req.device?.deviceName || "Unknown Device",
-    userAgent: req.device?.userAgent || req.get("User-Agent"),
+    deviceName: req.device?.deviceName,
+    userAgent: req.device?.userAgent,
     ipAddress: req.device?.ip,
     rememberMe: rememberMe,
     metadata: {
@@ -77,8 +77,8 @@ const verifyAccount = catchAsync(async (req: Request, res: Response) => {
   const token = await tokenService.generateLoginTokens({
     userId: user?.id!,
     deviceId: req.device?.deviceId,
-    deviceName: req.device?.deviceName || "Unknown Device",
-    userAgent: req.device?.userAgent || req.get("User-Agent"),
+    deviceName: req.device?.deviceName,
+    userAgent: req.device?.userAgent,
     ipAddress: req.device?.ip,
     rememberMe: rememberMe,
     metadata: {
@@ -103,7 +103,7 @@ const verifyAccount = catchAsync(async (req: Request, res: Response) => {
 
 const logout = catchAsync(async (req: Request, res: Response) => {
   const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
-  const userId = req.user?.id; // From auth middleware
+  const userId = req.user?.id;
 
   if (refreshToken) {
     await tokenService.revokeRefreshToken(refreshToken, userId);
@@ -280,8 +280,18 @@ const oauthCallback = catchAsync(
 );
 
 const loginWithOAuth = catchAsync(async (req: Request, res: Response) => {
-  const body = req.body;
-  const result = await authService.loginWithOAuth(body);
+  const { provider, idToken, fcmToken, ...rest } = req.body;
+  let oauthUser;
+
+  if (provider === "google") {
+    oauthUser = await tokenService.verifyGoogleIdToken(idToken);
+  } else if (provider === "apple") {
+    oauthUser = await tokenService.verifyAppleIdToken(idToken);
+  } else {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid provider");
+  }
+
+  const result = await authService.loginWithOAuth(oauthUser);
 
   const token = await tokenService.generateLoginTokens({
     userId: result.id, // Now accessing result.user.id
@@ -301,18 +311,14 @@ const loginWithOAuth = catchAsync(async (req: Request, res: Response) => {
   });
 
   // Update FCM token if provided
-  if (body.fcmToken) {
-    await userService.updateUser(
-      result.id,
-      { fcmToken: body.fcmToken },
-      {},
-    );
+  if (fcmToken) {
+    await userService.updateUser(result.id, { fcmToken: fcmToken }, {});
   }
 
   logger.info("User logged in via OAuth", {
     userId: result.id,
     email: result.email,
-    provider: body.provider,
+    provider: provider,
     deviceName: req.device?.deviceName,
     ip: req.device?.ip,
   });
