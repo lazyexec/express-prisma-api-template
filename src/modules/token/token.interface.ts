@@ -1,6 +1,6 @@
 // types/token.types.ts
 
-import { tokenType } from "../../../generated/prisma/enums";
+import { tokenType } from "@prisma/client";
 
 
 export interface IToken {

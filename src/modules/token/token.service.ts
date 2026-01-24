@@ -5,7 +5,7 @@ import env from "../../configs/variables";
 import { strToDate } from "../../utils/date";
 import prisma from "../../configs/prisma";
 import { IToken } from "./token.interface";
-import { tokenType } from "../../../generated/prisma/enums";
+import { tokenType } from "@prisma/client";
 import crypto from "crypto";
 import logger from "../../utils/logger";
 import type { CookieOptions, Response } from "express";

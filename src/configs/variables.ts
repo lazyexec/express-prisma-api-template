@@ -90,6 +90,7 @@ const envSchema = z
     APPLE_TEAM_ID: z.string().optional().describe("Apple Team ID"),
     APPLE_KEY_ID: z.string().optional().describe("Apple Key ID"),
     APPLE_PRIVATE_KEY: z.string().optional().describe("Apple Private Key"),
+    GEMINI_API_KEY: z.string().optional().describe("Gemini API Key"),
   })
   .passthrough();
 
@@ -189,5 +190,6 @@ const env = {
       : undefined,
     callbackUrl: backendUrl + "/api/v1/auth/oauth/callback/apple",
   },
+  GEMINI_API_KEY: value.GEMINI_API_KEY,
 };
 export default env;

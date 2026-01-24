@@ -5,8 +5,9 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider      = "prisma-client-js"
+  engineType    = "binary"
+  binaryTargets = ["native"]
 }
 
 datasource db {
@@ -143,4 +144,63 @@ model FAQ {
   updatedAt DateTime @updatedAt
 
   @@index([order])
+}
+
+// BUSINESS
+model Conversation {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id") @db.VarChar(255)
+  sessionId String   @map("session_id") @db.VarChar(255)
+  metadata  Json     @default("{}") @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  // Relations
+  messages Message[]
+
+  // Indexes
+  @@unique([userId, sessionId], name: "userId_sessionId")
+  @@index([userId, sessionId])
+  @@index([createdAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             Int      @id @default(autoincrement())
+  conversationId Int      @map("conversation_id")
+  role           String   @db.VarChar(50) // 'user' | 'assistant' | 'system'
+  content        String   @db.Text
+  provider       String?  @db.VarChar(50) // 'openai' | 'anthropic' | 'gemini'
+  model          String?  @db.VarChar(100)
+  tokensUsed     Int?     @map("tokens_used")
+  metadata       Json     @default("{}") @db.JsonB
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([conversationId])
+  @@index([createdAt])
+  @@index([role])
+  @@map("messages")
+}
+
+// ============================================================================
+// RAG (RETRIEVAL AUGMENTED GENERATION) MODELS
+// ============================================================================
+
+model RagDocument {
+  id        Int                          @id @default(autoincrement())
+  userId    String                       @map("user_id") @db.VarChar(255)
+  projectId String                       @map("project_id") @db.VarChar(255)
+  content   String                       @db.Text
+  embedding Unsupported("vector(1536)")? // OpenAI embedding dimension
+  metadata  Json                         @default("{}") @db.JsonB
+  createdAt DateTime                     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  // Indexes
+  @@index([userId, projectId])
+  @@index([createdAt])
+  @@map("rag_documents")
 }
